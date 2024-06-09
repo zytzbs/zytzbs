@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中医五行信息计算器</title>
+<style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            margin: auto;
+        }
+h1 {
+            text-align: center;
+            color: #333;
+            font-size: 1.8em; /* 增大标题字体大小 */
+            margin-bottom: 20px;
+            font-weight: normal; /* 调整字体粗细 */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* 添加文本阴影 */
+        }
+        label {
+            margin-bottom: 5px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background: #5cb85c;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .result {
+            background: #e9ecef;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        @media (max-width: 400px) {
+            .container {
+                width: 100%;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+	    <div class="container">
+        <h1>中医五行年份和月份信息</h1>
+        <form id="tcmInfoForm">
+            <label for="yearInput">年份：</label>
+            <input type="number" id="yearInput" min="0" placeholder="请输入年份">
+            <label for="monthInput">月份：</label>
+            <input type="number" id="monthInput" min="1" max="12" placeholder="请输入月份">
+            <label for="monthInput">年龄：</label>
+			<input type="number" id="ageInput"  placeholder="请输入年龄">
+            <button type="button" onclick="displayTcmInfo()">查询</button>
+        </form>
+        <div class="result" id="result"></div>
+		<div class="result" id="monthlyYunInfo"></div>
+    </div>
+
+
+    <script>
+    function getTcmInfo(year) {
+        const tianGan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        const diZhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        const shengxiao = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+
+        const tianGanIndex = (year - 4) % 10;
+        const diZhiIndex = (year - 4) % 12; // 注意这里的调整，因为地支的起始年份是甲子年
+        const ganZhi = tianGan[tianGanIndex] + diZhi[diZhiIndex];
+        const zodiac = shengxiao[diZhiIndex];
+
+        const lastDigit = year % 10;
+        let yun, zangFu, keZhi, beiKeZhi;
+
+        // 五运信息
+        if (lastDigit === 0 || lastDigit === 5) {
+            yun = '金';
+            zangFu = '肺';
+            keZhi = '木（肝）';
+            beiKeZhi = '火（心）';
+        } else if (lastDigit === 1 || lastDigit === 6) {
+            yun = '水';
+            zangFu = '肾';
+            keZhi = '火（心）';
+            beiKeZhi = '土（脾）';
+        } else if (lastDigit === 2 || lastDigit === 7) {
+            yun = '木';
+            zangFu = '肝';
+            keZhi = '土（脾）';
+            beiKeZhi = '金（肺）';
+        } else if (lastDigit === 3 || lastDigit === 8) {
+            yun = '火';
+            zangFu = '心';
+            keZhi = '金（肺）';
+            beiKeZhi = '水（肾）';
+        } else if (lastDigit === 4 || lastDigit === 9) {
+            yun = '土';
+            zangFu = '脾';
+            keZhi = '水（肾）';
+            beiKeZhi = '木（肝）';
+        }
+
+// 判断五运的过或不及，并确定相应的影响
+function determineYunConditionAndEffect(yun, lastDigit) {
+    let yunCondition = lastDigit % 2 === 0 ? '太过' : '不及';
+    let yunEffect = '';
+    switch (yun) {
+        case '水':
+            yunEffect = yunCondition === '太过' ? '泻肝木' : '补肺金';
+            break;
+        case '木':
+            yunEffect = yunCondition === '太过' ? '泻心火' : '补肾水';
+            break;
+        case '火':
+            yunEffect = yunCondition === '太过' ? '泻脾土' : '补肝木';
+            break;
+        case '土':
+            yunEffect = yunCondition === '太过' ? '泻肺金' : '补心火';
+            break;
+        case '金':
+            yunEffect = yunCondition === '太过' ? '泻肾水' : '补脾土';
+            break;
+    }
+    return { yunCondition, yunEffect };
+}
+
+
+const { yunCondition, yunEffect } = determineYunConditionAndEffect(yun, lastDigit);
+
+
+        // 脏腑问题判定（根据天干）
+        const zangFuWeakTianGan = {
+            '甲': '胆，头',
+            '乙': '肝，项，颈椎',
+            '丙': '小肠，肩',
+            '丁': '心',
+            '戊': '胃，胁，胸',
+            '己': '脾，腹',
+            '庚': '大肠，脐轮',
+            '辛': '肺，股，腰椎',
+            '壬': '膀胱，胫，下肢',
+            '癸': '肾，足'
+        };
+
+        // 脏腑问题判定（根据地支）
+        const zangFuWeakDiZhi = {
+            '子': '膀胱，水道，耳',
+            '丑': '胞肚，脾乡',
+            '寅': '胆，发脉，两手',
+            '卯': '十指，肝方',
+            '辰': '皮，肩，胸类',
+            '巳': '面，齿咽，下尻肛',
+            '午': '精神，眼目',
+            '未': '胃脘，膈，脊梁',
+            '申': '大肠，经络，肺',
+            '酉': '精血，小肠藏',
+            '戌': '命门，腿，足',
+            '亥': '头，肾囊'
+        };
+
+        // 司天和在泉信息
+        const sitianZaichuan = {
+            '鼠': '少阴君火，阳明燥金',
+            '牛': '太阴湿土，太阳寒水',
+            '虎': '少阳相火，厥阴风木',
+            '兔': '阳明燥金，少阴君火',
+            '龙': '太阳寒水，太阴湿土',
+            '蛇': '厥阴风木，少阳相火',
+            '马': '少阴君火，阳明燥金',
+            '羊': '太阴湿土，太阳寒水',
+            '猴': '少阳相火，厥阴风木',
+            '鸡': '阳明燥金，少阴君火',
+            '狗': '太阳寒水，太阴湿土',
+            '猪': '厥阴风木，少阳相火'
+        };
+
+        // 方剂信息
+const fangJi = {
+            '鼠': '黄芩丹皮汤-----黄芩3g，牡丹皮10g，地黄10g，白芍10g，玄参5g，黄芪20g，麦冬12g，白术10g，蒲黄20g，姜黄10g，附片2g，干姜2g，炙甘草10g',
+            '牛': '术甘苓泽汤-----白术10g，炙甘草10g，茯苓24g，泽泻24g，柴胡14g，黄芩3g，蒲黄20g，姜黄20g，党参10g',
+            '虎': '柴芍四黄汤-----柴胡14g，赤芍10g，黄芩3g，黄芪20g，蒲黄10g，姜黄10g，麦冬12g，枳壳6g，白术6g，瓜蒌20g',
+            '兔': '黄芪麦冬汤-----黄芪20g，麦冬12g，厚朴20g，黄芩3g，薏仁24g，葛根24g，蒲黄20g，姜黄10g，蜂房5g，地黄5g，白术10g，枳壳10g',
+            '龙': '四逆柴桂汤-----附片4g，干姜3g，炙甘草10g，茯苓24g，明党参10g，木瓜24g，柴胡14g，黄芩3g，桂枝10g，白术10g',
+            '蛇': '柴芩仙杜理中汤-----柴胡14g，黄芩3g，威灵仙24g，杜仲10g，党参10g，白术10g，炙甘草10g，干姜3g',
+			
+            '马': '黄芩丹皮汤-----黄芩3g，牡丹皮10g，地黄10g，白芍10g，玄参5g，黄芪20g，麦冬12g，白术10g，蒲黄20g，姜黄10g，附片2g，干姜2g，炙甘草10g',
+            '羊': '术甘苓泽汤-----白术10g，炙甘草10g，茯苓24g，泽泻24g，柴胡14g，黄芩3g，蒲黄20g，姜黄20g，党参10g',
+            '猴': '柴芍四黄汤-----柴胡14g，赤芍10g，黄芩3g，黄芪20g，蒲黄10g，姜黄10g，麦冬12g，枳壳6g，白术6g，瓜蒌20g',
+            '鸡': '黄芪麦冬汤-----黄芪20g，麦冬12g，厚朴20g，黄芩3g，薏仁24g，葛根24g，蒲黄20g，姜黄10g，蜂房5g，地黄5g，白术10g，枳壳10g',
+            '狗': '四逆柴桂汤-----附片4g，干姜3g，炙甘草10g，茯苓24g，明党参10g，木瓜24g，柴胡14g，黄芩3g，桂枝10g，白术10g',
+            '猪': '柴芩仙杜理中汤-----柴胡14g，黄芩3g，威灵仙24g，杜仲10g，党参10g，白术10g，炙甘草10g，干姜3g',			
+			
+			
+		
+        };
+
+        const resultInfo = {
+            'year': '年份: '+year,
+            'ganZhi': '天干地支：'+ganZhi,
+            'zodiac': '生肖：'+zodiac,
+            'yun': '五运：'+yun+'，'+yunCondition,
+            //'yunCondition': yunCondition,
+            'yunEffect': '五运调理：'+yunEffect,
+			'zangFuWeakTianGan': '弱脏（天干）：'+zangFuWeakTianGan[tianGan[tianGanIndex]],
+            'zangFuWeakDiZhi': '弱脏（地支）：'+zangFuWeakDiZhi[diZhi[diZhiIndex]],
+            'sitianZaichuan': '司天在泉：'+sitianZaichuan[zodiac],
+            'zangFu': '五运对应脏腑：'+zangFu,
+            'keZhi': '五运相克：'+keZhi,
+            'beiKeZhi': '五运被克：'+beiKeZhi,
+            
+            //'fangJi': '方剂:'+fangJi[zodiac] ? fangJi[zodiac] : '无对应方剂'
+			'fangJi': '方剂：'+fangJi[zodiac]
+        };
+
+        return Object.values(resultInfo).join('\n');
+    }
+
+    function displayTcmInfo() {
+        const year = document.getElementById('yearInput').value;
+        if (year) {
+            const result = getTcmInfo(year);
+            document.getElementById('result').textContent = result;
+        } else {
+            document.getElementById('result').textContent = '请输入年份。';
+        }
+    }
+
+	
+	function getMonthlyYunInfo(month) {
+        let yun = null;
+        let zangFu = null;
+        // 根据月份设置五运和脏腑信息
+        switch (true) {
+            case month === 1 || month === 2:
+                yun = '厥阴风木';
+                zangFu = '肝气旺';
+                break;
+            case month === 3 || month === 4:
+                yun = '少阴君火';
+                zangFu = '心火旺，易患皮肤病';
+                break;
+            case month === 5 || month === 6:
+                yun = '少阳相火';
+                zangFu = '相火旺，怕热，易上火';
+                break;
+            case month === 7 || month === 8:
+                yun = '太阴湿土';
+                zangFu = '脾胃较差，胃寒，易患关节炎';
+                break;
+            case month === 9 || month === 10:
+                yun = '阳明燥金';
+                zangFu = '大肠功能较差，汗多，易患颈椎病';
+                break;
+            case month === 11 || month === 12:
+                yun = '太阳寒水';
+                zangFu = '怕冷，易患关节炎，腰椎病';
+                break;
+            default:
+                // 如果月份输入无效，返回提示信息
+                return { yun: '无效月份', zangFu: '请输入有效的月份（1-12）' };
+        }
+        return { yun, zangFu };
+    }
+
+    function displayMonthlyYunInfo() {
+        const month = parseInt(document.getElementById('monthInput').value, 10);
+        const { yun, zangFu } = getMonthlyYunInfo(month);
+        const resultElement = document.getElementById('monthlyYunInfo');
+		
+	
+        if (yun !== '无效月份') {
+            resultElement.textContent = `月份对应的五运: ${yun}，脏腑状况: ${zangFu}`;
+        } else {
+            resultElement.textContent = zangFu;
+        }
+    }
+	
+	function displayTcmInfo() {
+        //const year = parseInt(document.getElementById('yearInput').value, 10);
+       // const month = parseInt(document.getElementById('monthInput').value, 10);
+       // const resultElement = document.getElementById('tcmInfoResult');
+		//m_textcontent = displayMonthlyYunInfo();
+		
+		const age = document.getElementById('ageInput').value; 
+				if (age) {
+			const birthYear = calculateBirthYear(age);
+			
+			const result = getTcmInfo(birthYear);
+			document.getElementById('result').textContent = result;
+			}
+		
+		
+		const year = parseInt(document.getElementById('yearInput').value, 10);
+        if (year) {
+            const result = getTcmInfo(year);
+            document.getElementById('result').textContent = result;
+        } else {
+		
+				if (age) {
+			const birthYear = calculateBirthYear(age);
+			
+			const result = getTcmInfo(birthYear);
+			document.getElementById('result').textContent = result;
+			}else{
+			
+			document.getElementById('result').textContent = '请输入年份或者年龄。';
+			
+			
+			}
+		
+		
+		
+            
+        }
+		 const month = parseInt(document.getElementById('monthInput').value, 10);
+        const { yun, zangFu } = getMonthlyYunInfo(month);
+        const resultElement = document.getElementById('monthlyYunInfo');
+		
+		if (yun !== '无效月份') {
+            resultElement.textContent = `月份对应的五运: ${yun}，脏腑状况: ${zangFu}`;
+        } else {
+            resultElement.textContent = zangFu;
+        }
+		
+		
+
+
+		
+		     
+		
+        
+    }
+	
+	
+	function calculateBirthYear(age) {
+    const currentYear = new Date().getFullYear(); // 获取当前年份
+    const birthYear = currentYear - age; // 计算出生年份
+    return birthYear;
+}
+	
+	
+	
+	
+    </script>
+</body>
+</html>
